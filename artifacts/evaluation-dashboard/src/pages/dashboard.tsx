@@ -102,28 +102,64 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="h-3 w-3 rounded-full bg-red-500" />
-                  <span className="text-sm font-medium">Placement (P3)</span>
+              {[
+                { label: "Placement (P3)", dot: "bg-red-500", total: stats.placementNotifications },
+                { label: "Result (P2)",    dot: "bg-amber-500", total: stats.resultNotifications },
+                { label: "Event (P1)",     dot: "bg-blue-500",  total: stats.eventNotifications },
+              ].map(({ label, dot, total }) => (
+                <div key={label} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className={`h-3 w-3 rounded-full ${dot}`} />
+                    <span className="text-sm font-medium">{label}</span>
+                  </div>
+                  <span className="text-sm text-muted-foreground">{total}</span>
                 </div>
-                <span className="text-sm text-muted-foreground">{stats.placementNotifications}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="h-3 w-3 rounded-full bg-amber-500" />
-                  <span className="text-sm font-medium">Result (P2)</span>
-                </div>
-                <span className="text-sm text-muted-foreground">{stats.resultNotifications}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="h-3 w-3 rounded-full bg-blue-500" />
-                  <span className="text-sm font-medium">Event (P1)</span>
-                </div>
-                <span className="text-sm text-muted-foreground">{stats.eventNotifications}</span>
-              </div>
+              ))}
             </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/50 bg-card/50 backdrop-blur">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              Unread by Type
+              {stats.unreadNotifications > 0 && (
+                <span className="ml-auto text-xs font-normal px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                  {stats.unreadNotifications} total unread
+                </span>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {stats.unreadNotifications === 0 ? (
+              <p className="text-sm text-muted-foreground italic">All caught up — no unread notifications.</p>
+            ) : (
+              <div className="space-y-4">
+                {[
+                  { label: "Placement (P3)", dot: "bg-red-500",    bar: "bg-red-500/60",    count: stats.unreadPlacement, total: stats.placementNotifications },
+                  { label: "Result (P2)",    dot: "bg-amber-500",  bar: "bg-amber-500/60",  count: stats.unreadResult,    total: stats.resultNotifications },
+                  { label: "Event (P1)",     dot: "bg-blue-500",   bar: "bg-blue-500/60",   count: stats.unreadEvent,     total: stats.eventNotifications },
+                ].map(({ label, dot, bar, count, total }) => (
+                  <div key={label} className="space-y-1.5">
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2">
+                        <div className={`h-2.5 w-2.5 rounded-full ${dot}`} />
+                        <span className="font-medium">{label}</span>
+                      </div>
+                      <span className={`font-semibold tabular-nums ${count > 0 ? "text-foreground" : "text-muted-foreground"}`}>
+                        {count} <span className="text-xs font-normal text-muted-foreground">/ {total}</span>
+                      </span>
+                    </div>
+                    <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all ${bar}`}
+                        style={{ width: total > 0 ? `${(count / total) * 100}%` : "0%" }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
