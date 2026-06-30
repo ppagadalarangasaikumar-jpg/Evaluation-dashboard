@@ -23,7 +23,6 @@ import { z } from "zod";
 import { Bell, CheckCheck, Trash2, Check, Plus, Download, Search, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { exportToCsv } from "@/lib/export-csv";
-import { Input } from "@/components/ui/input";
 
 const TYPE_COLORS: Record<string, string> = {
   Placement: "bg-red-500/10 text-red-400 border-red-500/30",
