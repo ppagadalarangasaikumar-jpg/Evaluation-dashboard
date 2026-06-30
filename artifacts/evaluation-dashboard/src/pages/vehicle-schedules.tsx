@@ -3,12 +3,46 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Truck, Clock, Zap, Building2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Truck, Clock, Zap, Building2, Download } from "lucide-react";
+import { exportToCsv } from "@/lib/export-csv";
 
 export default function VehicleSchedules() {
   const { data, isLoading } = useGetVehicleSchedules({
     query: { queryKey: getGetVehicleSchedulesQueryKey() }
   });
+
+  const handleExport = () => {
+    if (!data) return;
+    const rows = data.schedules.flatMap((depot) =>
+      depot.selectedTasks.length > 0
+        ? depot.selectedTasks.map((task) => ({
+            "Depot ID": depot.depotId,
+            "Depot Name": depot.depotName,
+            "Mechanic Hours": depot.mechanicHours,
+            "Used Hours": depot.usedHours,
+            "Remaining Hours": depot.remainingHours,
+            "Efficiency (%)": depot.efficiency,
+            "Total Impact": depot.totalImpact,
+            "Task ID": task.taskId,
+            "Task Duration (h)": task.duration,
+            "Task Impact": task.impact,
+          }))
+        : [{
+            "Depot ID": depot.depotId,
+            "Depot Name": depot.depotName,
+            "Mechanic Hours": depot.mechanicHours,
+            "Used Hours": depot.usedHours,
+            "Remaining Hours": depot.remainingHours,
+            "Efficiency (%)": depot.efficiency,
+            "Total Impact": depot.totalImpact,
+            "Task ID": "",
+            "Task Duration (h)": "",
+            "Task Impact": "",
+          }]
+    );
+    exportToCsv("vehicle-schedules.csv", rows);
+  };
 
   if (isLoading) {
     return (
@@ -34,11 +68,17 @@ export default function VehicleSchedules() {
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Vehicle Maintenance Scheduler</h1>
-        <p className="text-muted-foreground mt-2">
-          Knapsack-optimized maintenance task selection across {data.depotCount} depots, {data.vehicleTaskCount} tasks available.
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Vehicle Maintenance Scheduler</h1>
+          <p className="text-muted-foreground mt-2">
+            Knapsack-optimized maintenance task selection across {data.depotCount} depots, {data.vehicleTaskCount} tasks available.
+          </p>
+        </div>
+        <Button variant="outline" size="sm" onClick={handleExport} data-testid="button-export-schedules">
+          <Download className="h-4 w-4 mr-2" />
+          Export CSV
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
