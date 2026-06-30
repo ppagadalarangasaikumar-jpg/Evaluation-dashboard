@@ -20,9 +20,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Bell, CheckCheck, Trash2, Check, Plus, Download } from "lucide-react";
+import { Bell, CheckCheck, Trash2, Check, Plus, Download, Search, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { exportToCsv } from "@/lib/export-csv";
+import { Input } from "@/components/ui/input";
 
 const TYPE_COLORS: Record<string, string> = {
   Placement: "bg-red-500/10 text-red-400 border-red-500/30",
@@ -48,6 +49,7 @@ type CreateForm = z.infer<typeof createSchema>;
 export default function Notifications() {
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [search, setSearch] = useState<string>("");
   const [createOpen, setCreateOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -139,8 +141,17 @@ export default function Notifications() {
     );
   }
 
-  const notifications = data?.data ?? [];
+  const allNotifications = data?.data ?? [];
   const unreadCount = data?.unreadCount ?? 0;
+
+  const query = search.trim().toLowerCase();
+  const notifications = query
+    ? allNotifications.filter(
+        (n) =>
+          n.title.toLowerCase().includes(query) ||
+          n.message.toLowerCase().includes(query)
+      )
+    : allNotifications;
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -263,7 +274,26 @@ export default function Notifications() {
         </div>
       </div>
 
-      <div className="flex gap-3">
+      <div className="flex gap-3 flex-wrap">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+          <Input
+            placeholder="Search title or message…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9 pr-8"
+            data-testid="input-search"
+          />
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              aria-label="Clear search"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
         <Select value={typeFilter} onValueChange={setTypeFilter}>
           <SelectTrigger className="w-40" data-testid="select-type-filter">
             <SelectValue placeholder="Filter by type" />
