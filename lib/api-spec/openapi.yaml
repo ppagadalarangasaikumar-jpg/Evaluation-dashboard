@@ -179,6 +179,12 @@ components:
           type: number
         avgImpactScore:
           type: number
+        unreadPlacement:
+          type: integer
+        unreadResult:
+          type: integer
+        unreadEvent:
+          type: integer
       required:
         - totalDepots
         - totalVehicleTasks
@@ -189,6 +195,9 @@ components:
         - eventNotifications
         - avgMechanicHoursUsed
         - avgImpactScore
+        - unreadPlacement
+        - unreadResult
+        - unreadEvent
 
     MaintenanceTask:
       type: object
