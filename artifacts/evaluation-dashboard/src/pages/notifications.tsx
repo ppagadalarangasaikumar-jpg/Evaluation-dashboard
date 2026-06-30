@@ -8,7 +8,7 @@ import {
   useCreateNotification,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -20,8 +20,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Bell, CheckCheck, Trash2, Check, Plus } from "lucide-react";
+import { Bell, CheckCheck, Trash2, Check, Plus, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { exportToCsv } from "@/lib/export-csv";
 
 const TYPE_COLORS: Record<string, string> = {
   Placement: "bg-red-500/10 text-red-400 border-red-500/30",
@@ -94,6 +95,21 @@ export default function Notifications() {
     });
   };
 
+  const handleExport = () => {
+    const rows = (data?.data ?? []).map((n) => ({
+      "Rank": n.rank,
+      "Type": n.type,
+      "Priority": TYPE_PRIORITY[n.type] ?? "",
+      "Student ID": n.studentId,
+      "Title": n.title,
+      "Message": n.message,
+      "Status": n.isRead ? "Read" : "Unread",
+      "Created At": new Date(n.createdAt).toLocaleString(),
+      "Read At": n.readAt ? new Date(n.readAt).toLocaleString() : "",
+    }));
+    exportToCsv("notifications.csv", rows);
+  };
+
   const onSubmit = (values: CreateForm) => {
     const studentIds = values.studentIds.split(",").map((s) => parseInt(s.trim(), 10)).filter(Boolean);
     createNotif.mutate(
@@ -140,6 +156,16 @@ export default function Notifications() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExport}
+            disabled={notifications.length === 0}
+            data-testid="button-export-notifications"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Export CSV
+          </Button>
           {unreadCount > 0 && (
             <Button
               variant="outline"
