@@ -1,0 +1,334 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: Evaluation Dashboard API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: vehicles
+    description: Vehicle maintenance scheduling
+  - name: notifications
+    description: Campus notification system
+  - name: stats
+    description: Dashboard statistics
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /stats:
+    get:
+      operationId: getDashboardStats
+      tags: [stats]
+      summary: Get dashboard overview statistics
+      responses:
+        "200":
+          description: Stats returned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  /vehicle-schedules:
+    get:
+      operationId: getVehicleSchedules
+      tags: [vehicles]
+      summary: Get optimized vehicle maintenance schedules per depot
+      responses:
+        "200":
+          description: Schedules returned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VehicleScheduleResponse"
+
+  /notifications:
+    get:
+      operationId: getNotifications
+      tags: [notifications]
+      summary: Get all notifications with priority ranking
+      parameters:
+        - in: query
+          name: type
+          schema:
+            type: string
+            enum: [Placement, Result, Event]
+          required: false
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [all, unread, read]
+          required: false
+      responses:
+        "200":
+          description: Notifications returned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationListResponse"
+    post:
+      operationId: createNotification
+      tags: [notifications]
+      summary: Create a new notification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotificationInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationBatch"
+
+  /notifications/{id}/read:
+    patch:
+      operationId: markNotificationRead
+      tags: [notifications]
+      summary: Mark a notification as read
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Marked as read
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /notifications/read-all:
+    patch:
+      operationId: markAllNotificationsRead
+      tags: [notifications]
+      summary: Mark all notifications as read
+      responses:
+        "200":
+          description: All marked as read
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MarkAllReadResponse"
+
+  /notifications/{id}:
+    delete:
+      operationId: deleteNotification
+      tags: [notifications]
+      summary: Delete a notification
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required: [status]
+
+    DashboardStats:
+      type: object
+      properties:
+        totalDepots:
+          type: integer
+        totalVehicleTasks:
+          type: integer
+        totalNotifications:
+          type: integer
+        unreadNotifications:
+          type: integer
+        placementNotifications:
+          type: integer
+        resultNotifications:
+          type: integer
+        eventNotifications:
+          type: integer
+        avgMechanicHoursUsed:
+          type: number
+        avgImpactScore:
+          type: number
+      required:
+        - totalDepots
+        - totalVehicleTasks
+        - totalNotifications
+        - unreadNotifications
+        - placementNotifications
+        - resultNotifications
+        - eventNotifications
+        - avgMechanicHoursUsed
+        - avgImpactScore
+
+    MaintenanceTask:
+      type: object
+      properties:
+        taskId:
+          type: string
+        duration:
+          type: integer
+        impact:
+          type: integer
+      required: [taskId, duration, impact]
+
+    DepotSchedule:
+      type: object
+      properties:
+        depotId:
+          type: string
+        depotName:
+          type: string
+        mechanicHours:
+          type: integer
+        usedHours:
+          type: integer
+        remainingHours:
+          type: integer
+        totalImpact:
+          type: integer
+        efficiency:
+          type: number
+        selectedTasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/MaintenanceTask"
+      required:
+        - depotId
+        - depotName
+        - mechanicHours
+        - usedHours
+        - remainingHours
+        - totalImpact
+        - efficiency
+        - selectedTasks
+
+    VehicleScheduleResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        depotCount:
+          type: integer
+        vehicleTaskCount:
+          type: integer
+        schedules:
+          type: array
+          items:
+            $ref: "#/components/schemas/DepotSchedule"
+      required: [success, depotCount, vehicleTaskCount, schedules]
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+        studentId:
+          type: integer
+        type:
+          type: string
+          enum: [Placement, Result, Event]
+        title:
+          type: string
+        message:
+          type: string
+        isRead:
+          type: boolean
+        priority:
+          type: integer
+        rank:
+          type: ["integer", "null"]
+        createdAt:
+          type: string
+        readAt:
+          type: ["string", "null"]
+      required: [id, studentId, type, title, message, isRead, priority, createdAt, readAt]
+
+    NotificationListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        total:
+          type: integer
+        unreadCount:
+          type: integer
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Notification"
+      required: [success, total, unreadCount, data]
+
+    NotificationInput:
+      type: object
+      properties:
+        studentIds:
+          type: array
+          items:
+            type: integer
+        type:
+          type: string
+          enum: [Placement, Result, Event]
+        title:
+          type: string
+        message:
+          type: string
+      required: [studentIds, type, title, message]
+
+    NotificationBatch:
+      type: object
+      properties:
+        success:
+          type: boolean
+        notificationBatchId:
+          type: string
+        createdCount:
+          type: integer
+      required: [success, notificationBatchId, createdCount]
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      required: [success, message]
+
+    MarkAllReadResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        updatedCount:
+          type: integer
+      required: [success, updatedCount]
